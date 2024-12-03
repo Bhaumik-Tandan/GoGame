@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Social Media",
+    "slug": "social-media",
+    "scheme": "socialmedia",
+    "icon": "./assets/icon.png",
+    "splash": {
+        "image": "./assets/icon.png",
+        "backgroundColor": "#000",
+        "resizeMode": "cover"
+    },
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2052f43c-bb53-4884-9711-a4a63046bc7c"
+      }
+    },
+    "android": {
+      "package": "com.bhaumik.tandan.socialmedia"
+    }
+  }
+}
