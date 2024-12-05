@@ -4,12 +4,13 @@ import LoginScreen from 'app/pages/LoginScreen';
 import PAGES from 'app/constants/pages';
 import AppNavigator from './AppNavigator';
 import AuthNavigator from './AuthNavigator';
-const Stack = createNativeStackNavigator();
+import { getToken } from '../stores/auth';
 
 function RootNavigator() {
+    const token  = getToken();
     return (
         <NavigationContainer>
-            {false ? <AppNavigator /> : AuthNavigator}
+            {token ? <AppNavigator /> : AuthNavigator}
         </NavigationContainer>
     );
 }
