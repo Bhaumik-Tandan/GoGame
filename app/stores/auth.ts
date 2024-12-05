@@ -29,5 +29,5 @@ const useAuthStore = create<AuthState>()(
     )
 );
 
-export const useAuth = useAuthStore;
-export const getToken = () => useAuthStore.getState().token;
+export const useAuth = useAuthStore.getState();
+

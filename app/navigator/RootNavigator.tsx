@@ -4,10 +4,10 @@ import LoginScreen from 'app/pages/LoginScreen';
 import PAGES from 'app/constants/pages';
 import AppNavigator from './AppNavigator';
 import AuthNavigator from './AuthNavigator';
-import { getToken } from '../stores/auth';
+import { useAuth} from '../stores/auth';
 
 function RootNavigator() {
-    const token  = getToken();
+    const {token } = useAuth;
     return (
         <NavigationContainer>
             {token ? <AppNavigator /> : AuthNavigator}

@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 
 import { calcWidth } from 'app/helper/res';
-
+import { useAuth } from 'app/stores/auth';
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const { login } = useAuth;
 
   const handleLogin = () => {
-    console.log('Login attempted with:', { username, password });
+    login({ userName: username, password });
   };
 
   return (
