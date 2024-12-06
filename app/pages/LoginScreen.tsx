@@ -9,16 +9,24 @@ import {
   KeyboardAvoidingView, 
   Platform 
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { calcWidth } from 'app/helper/res';
 import { useAuth } from 'app/stores/auth';
+import PAGES from 'app/constants/pages';
+
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth;
+  // const { login } = useAuth();
+  const navigation = useNavigation();
 
   const handleLogin = () => {
-    login({ userName: username, password });
+    // login({ userName: username, password });
+  };
+
+  const handleSignUp = () => {
+    navigation.navigate(PAGES.SIGNUP,{});
   };
 
   return (
@@ -51,6 +59,13 @@ const LoginScreen = () => {
             onPress={handleLogin}
           >
             <Text style={styles.loginButtonText}>Login</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.signUpButton}
+            onPress={handleSignUp}
+          >
+            <Text style={styles.signUpButtonText}>Don't have an account? Sign Up</Text>
           </TouchableOpacity>
           
         </View>
@@ -104,6 +119,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  signUpButton: {
+    marginTop: calcWidth(2),
+    alignItems: 'center',
+  },
+  signUpButtonText: {
+    color: '#007bff',
+    fontSize: 14,
   }
 });
 
