@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import PAGES from 'app/constants/pages';
+import { API_URL } from '@env';
 const SignupScreen = () => {
     const navigation = useNavigation();
     const [username, setUsername] = useState('');
@@ -13,9 +14,7 @@ const SignupScreen = () => {
             Alert.alert("Please fill in all fields");
             return;
         }
-
-        // Perform signup logic
-        // Example signup call (replace with your actual signup method)
+        
         // signup({ username, password });
     };
 

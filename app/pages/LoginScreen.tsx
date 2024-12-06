@@ -12,7 +12,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 import { calcWidth } from 'app/helper/res';
-import { useAuth } from 'app/stores/auth';
+// import { useAuth } from 'app/stores/auth';
 import PAGES from 'app/constants/pages';
 
 const LoginScreen = () => {
@@ -26,7 +26,7 @@ const LoginScreen = () => {
   };
 
   const handleSignUp = () => {
-    navigation.navigate(PAGES.SIGNUP,{});
+    navigation.navigate(PAGES.SIGNUP as never, {});
   };
 
   return (
@@ -60,12 +60,12 @@ const LoginScreen = () => {
           >
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
-
+          <Text>Don't have an account? </Text>
           <TouchableOpacity 
             style={styles.signUpButton}
             onPress={handleSignUp}
           >
-            <Text style={styles.signUpButtonText}>Don't have an account? Sign Up</Text>
+            <Text style={styles.signUpButtonText}>Sign Up</Text>
           </TouchableOpacity>
           
         </View>
