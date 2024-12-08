@@ -12,17 +12,17 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 import { calcWidth } from 'app/helper/res';
-// import { useAuth } from 'app/stores/auth';
+import { useAuth } from 'app/stores/auth';
 import PAGES from 'app/constants/pages';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  // const { login } = useAuth();
+  const { login } = useAuth();
   const navigation = useNavigation();
 
   const handleLogin = () => {
-    // login({ userName: username, password });
+    login({ userName: username, password });
   };
 
   const handleSignUp = () => {

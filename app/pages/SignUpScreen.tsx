@@ -2,20 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import PAGES from 'app/constants/pages';
-import { API_URL } from '@env';
+import { useAuth } from 'app/stores/auth';
 const SignupScreen = () => {
     const navigation = useNavigation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const { signup } = useAuth();
 
     const handleSignup = () => {
-        // Validate inputs
-        if (!username || !password) {
-            Alert.alert("Please fill in all fields");
-            return;
-        }
-        
-        // signup({ username, password });
+        signup({ username, password });
     };
 
     return (

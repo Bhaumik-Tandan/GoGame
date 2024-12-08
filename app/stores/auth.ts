@@ -2,32 +2,32 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiHelper from '../helper/apiHelper';
+
 interface AuthState {
     token: string | null;
-    userName: string | null;
+    username: string | null;
     logout: () => Promise<void>;
-    login: (credentials: { userName: string; password: string }) => void;
-    signup: (credentials: { userName: string; password: string }) => void;
+    login: (credentials: { username: string; password: string }) => void;
+    signup: (credentials: { username: string; password: string }) => void;
 }
 
 const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
             token: null,
-            userName: null,
+            username: null,
             logout: async () => {
-                set({ token: null, userName: null });
+                set({ token: null, username: null });
             },
-            login: async ({ userName, password }) => {
-                const res=await apiHelper.post('/auth/login', { username: userName, password })
-                const {token}=res.data;
-                set({ token, userName });
-
+            login: async ({ username, password }) => {
+                const res = await apiHelper.post('/auth/login', { username, password });
+                const { token } = res.data;
+                set({ token, username });
             },
-            signup: async ({ userName, password }) => {
-                const res=await apiHelper.post('/auth/signup', { username: userName, password })
-                const {token}=res.data;
-                set({ token, userName });
+            signup: async ({ username, password }) => {
+                const res = await apiHelper.post('/auth/signup', { username, password });
+                const { token } = res.data;
+                set({ token, username });
             },
         }),
         {
@@ -37,5 +37,5 @@ const useAuthStore = create<AuthState>()(
     )
 );
 
-export const useAuth = useAuthStore.getState();
-export const getToken = () => useAuth.token;
+export const useAuth = useAuthStore;
+export const getTokens = () => useAuthStore.getState().token;
