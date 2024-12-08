@@ -17,7 +17,6 @@ const useAuthStore = create<AuthState>()(
             token: null,
             username: null,
             logout: async () => {
-                console.log('logout');
                 set({ token: null, username: null });
             },
             login: async ({ username, password }) => {
