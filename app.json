@@ -5,9 +5,9 @@
     "scheme": "socialmedia",
     "icon": "./assets/icon.png",
     "splash": {
-        "image": "./assets/icon.png",
-        "backgroundColor": "#000",
-        "resizeMode": "cover"
+      "image": "./assets/icon.png",
+      "backgroundColor": "#000",
+      "resizeMode": "cover"
     },
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,6 +22,9 @@
     },
     "android": {
       "package": "com.bhaumik.tandan.socialmedia"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
     }
   }
 }
