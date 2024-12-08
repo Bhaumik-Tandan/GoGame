@@ -4,10 +4,15 @@ import LoginScreen from 'app/pages/LoginScreen';
 import PAGES from 'app/constants/pages';
 import AppNavigator from './AppNavigator';
 import AuthNavigator from './AuthNavigator';
-import { useAuth} from '../stores/auth';
+import { getTokens } from 'app/stores/auth';
+import { useEffect } from 'react';
 
 function RootNavigator() {
-    const {token } = useAuth;
+    const token=getTokens();
+    useEffect(() => {
+        console.log('token', token);
+    }
+    , [token]);
     return (
         <NavigationContainer>
             {token ? <AppNavigator /> : AuthNavigator}

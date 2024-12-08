@@ -1,12 +1,13 @@
+import { useAuth } from 'app/stores/auth';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Button } from 'react-native';
 
 const HomeScreen = () => {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState('');
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingText, setEditingText] = useState('');
-
+  const {logout} = useAuth();
   // Add a new to-do
   const handleAddTodo = () => {
     if (newTodo.trim()) {
@@ -40,6 +41,7 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
+      <Button title="Logout" onPress={logout} />
       <Text style={styles.title}>To-Do List</Text>
       <View style={styles.inputContainer}>
         <TextInput
