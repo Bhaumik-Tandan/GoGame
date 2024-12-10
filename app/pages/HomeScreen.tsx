@@ -1,43 +1,92 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Button, ActivityIndicator } from 'react-native';
+import request from 'app/helper/apiHelper'; // Assuming this is the path to your request helper
 import { useAuth } from 'app/stores/auth';
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Button } from 'react-native';
 
 const HomeScreen = () => {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState('');
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingText, setEditingText] = useState('');
-  const {logout} = useAuth();
-  // Add a new to-do
-  const handleAddTodo = () => {
-    if (newTodo.trim()) {
-      setTodos([...todos, { id: Date.now(), text: newTodo, completed: false }]);
+  const [loading, setLoading] = useState(false);
+  const { logout } = useAuth();
+
+  // Fetch tasks on component load
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const response = await request.get('/task');
+        setTodos(response.data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  // Add a new task
+  const handleAddTodo = async () => {
+    if (!newTodo.trim()) return;
+    setLoading(true);
+    try {
+      const response = await request.post('/task', { title: newTodo, isCompleted: false });
+      setTodos([...todos, response.data]);
       setNewTodo('');
+    } catch (error) {
+      console.error('Error adding task:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Toggle completion of a to-do
-  const toggleComplete = (id) => {
-    setTodos(todos.map(todo => todo.id === id ? { ...todo, completed: !todo.completed } : todo));
+  // Toggle task completion
+  const toggleComplete = async (id, currentStatus) => {
+    setLoading(true);
+    try {
+      const response = await request.patch(`/task/${id}`, { isCompleted: !currentStatus });
+      setTodos(todos.map(todo => (todo._id === id ? response.data : todo)));
+    } catch (error) {
+      console.error('Error toggling task:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Start editing a to-do
-  const startEditing = (id, text) => {
-    setEditingTodo(id);
-    setEditingText(text);
+  // Edit a task
+  const handleSaveEdit = async () => {
+    if (!editingText.trim()) return;
+    setLoading(true);
+    try {
+      const response = await request.patch(`/task/${editingTodo}`, { title: editingText });
+      setTodos(todos.map(todo => (todo._id === editingTodo ? response.data : todo)));
+      setEditingTodo(null);
+      setEditingText('');
+    } catch (error) {
+      console.error('Error editing task:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Save edited to-do
-  const handleSaveEdit = () => {
-    setTodos(todos.map(todo => todo.id === editingTodo ? { ...todo, text: editingText } : todo));
-    setEditingTodo(null);
-    setEditingText('');
+  // Delete a task
+  const handleDelete = async (id) => {
+    setLoading(true);
+    try {
+      await request.delete(`/task/${id}`);
+      setTodos(todos.filter(todo => todo._id !== id));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Delete a to-do
-  const handleDelete = (id) => {
-    setTodos(todos.filter(todo => todo.id !== id));
-  };
+  if (loading) {
+    return <ActivityIndicator size="large" color="#007BFF" style={styles.loadingIndicator} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -56,26 +105,29 @@ const HomeScreen = () => {
       </View>
       <FlatList
         data={todos}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View style={styles.todoItem}>
-            <TouchableOpacity onPress={() => toggleComplete(item.id)}>
-              <Text style={[styles.todoText, item.completed && styles.completedText]}>
-                {item.text}
+            <TouchableOpacity onPress={() => toggleComplete(item._id, item.isCompleted)}>
+              <Text style={[styles.todoText, item.isCompleted && styles.completedText]}>
+                {item.title}
               </Text>
             </TouchableOpacity>
             <View style={styles.actions}>
-              <TouchableOpacity onPress={() => startEditing(item.id, item.text)}>
+              <TouchableOpacity onPress={() => {
+                setEditingTodo(item._id);
+                setEditingText(item.title);
+              }}>
                 <Text style={styles.editButton}>Edit</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDelete(item.id)}>
+              <TouchableOpacity onPress={() => handleDelete(item._id)}>
                 <Text style={styles.deleteButton}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
       />
-      {editingTodo !== null && (
+      {editingTodo && (
         <View style={styles.editContainer}>
           <TextInput
             style={styles.input}
@@ -96,16 +148,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // White background for a clean look
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 20, // Adds spacing below the title
   },
   inputContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
+    flexDirection: 'row', // Horizontal alignment of input and button
+    marginBottom: 20, // Spacing below the input section
   },
   input: {
     flex: 1,
@@ -151,6 +203,11 @@ const styles = StyleSheet.create({
   editContainer: {
     flexDirection: 'row',
     marginTop: 20,
+  },
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
