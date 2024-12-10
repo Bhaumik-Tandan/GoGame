@@ -13,6 +13,19 @@ This project is a to-do application built with React Native and Expo. It demonst
 - Support for multiple users with concurrent sessions
 - Browser compatibility via Expo for Web
 
+  ## Demo
+
+
+
+https://github.com/user-attachments/assets/b8ea269d-8dce-443a-a525-5e11abd29e54
+
+
+https://github.com/user-attachments/assets/bc81586d-52da-4485-9800-343c4e845f67
+
+
+
+
+
 ## Technical Stack
 
 - **Frontend**: React Native with TypeScript and Expo
