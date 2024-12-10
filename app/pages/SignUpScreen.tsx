@@ -34,7 +34,6 @@ const SignupScreen = () => {
     try {
       await signup({ username: username.trim(), password });
       alert('Account created successfully!');
-      navigation.navigate(PAGES.LOGIN);
     } catch (err) {
       alert(err.message || 'An unexpected error occurred. Please try again.');
     }
