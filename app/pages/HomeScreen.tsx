@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Button, ActivityIndicator } from 'react-native';
-import request from 'app/helper/apiHelper'; // Assuming this is the path to your request helper
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  FlatList, 
+  StyleSheet, 
+  SafeAreaView,
+  StatusBar,
+  Alert
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import request from 'app/helper/apiHelper';
 import { useAuth } from 'app/stores/auth';
 
 const HomeScreen = () => {
@@ -8,207 +19,249 @@ const HomeScreen = () => {
   const [newTodo, setNewTodo] = useState('');
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingText, setEditingText] = useState('');
-  const [loading, setLoading] = useState(false);
   const { logout } = useAuth();
 
-  // Fetch tasks on component load
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      try {
-        const response = await request.get('/task');
-        setTodos(response.data);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTasks();
+  const fetchTasks = useCallback(async () => {
+    try {
+      const response = await request.get('/task');
+      setTodos(response.data);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      Alert.alert('Error', 'Failed to fetch tasks. Please try again.');
+    }
   }, []);
 
-  // Add a new task
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
   const handleAddTodo = async () => {
     if (!newTodo.trim()) return;
-    setLoading(true);
+    const optimisticTodo = { _id: Date.now().toString(), title: newTodo, isCompleted: false };
+    setTodos(prevTodos => [...prevTodos, optimisticTodo]);
+    setNewTodo('');
     try {
       const response = await request.post('/task', { title: newTodo, isCompleted: false });
-      setTodos([...todos, response.data]);
-      setNewTodo('');
+      setTodos(prevTodos => prevTodos.map(todo => 
+        todo._id === optimisticTodo._id ? response.data : todo
+      ));
     } catch (error) {
       console.error('Error adding task:', error);
-    } finally {
-      setLoading(false);
+      setTodos(prevTodos => prevTodos.filter(todo => todo._id !== optimisticTodo._id));
+      Alert.alert('Error', 'Failed to add task. Please try again.');
     }
   };
 
-  // Toggle task completion
   const toggleComplete = async (id, currentStatus) => {
-    setLoading(true);
+    const updatedTodos = todos.map(todo => 
+      todo._id === id ? { ...todo, isCompleted: !currentStatus } : todo
+    );
+    setTodos(updatedTodos);
     try {
-      const response = await request.patch(`/task/${id}`, { isCompleted: !currentStatus });
-      setTodos(todos.map(todo => (todo._id === id ? response.data : todo)));
+      await request.patch(`/task/${id}`, { isCompleted: !currentStatus });
     } catch (error) {
       console.error('Error toggling task:', error);
-    } finally {
-      setLoading(false);
+      setTodos(todos); // Revert to original state
+      Alert.alert('Error', 'Failed to update task. Please try again.');
     }
   };
 
-  // Edit a task
   const handleSaveEdit = async () => {
     if (!editingText.trim()) return;
-    setLoading(true);
+    const updatedTodos = todos.map(todo => 
+      todo._id === editingTodo ? { ...todo, title: editingText } : todo
+    );
+    setTodos(updatedTodos);
+    setEditingTodo(null);
+    setEditingText('');
     try {
-      const response = await request.patch(`/task/${editingTodo}`, { title: editingText });
-      setTodos(todos.map(todo => (todo._id === editingTodo ? response.data : todo)));
-      setEditingTodo(null);
-      setEditingText('');
+      await request.patch(`/task/${editingTodo}`, { title: editingText });
     } catch (error) {
       console.error('Error editing task:', error);
-    } finally {
-      setLoading(false);
+      setTodos(todos); // Revert to original state
+      Alert.alert('Error', 'Failed to edit task. Please try again.');
     }
   };
 
-  // Delete a task
   const handleDelete = async (id) => {
-    setLoading(true);
+    const updatedTodos = todos.filter(todo => todo._id !== id);
+    setTodos(updatedTodos);
     try {
       await request.delete(`/task/${id}`);
-      setTodos(todos.filter(todo => todo._id !== id));
     } catch (error) {
       console.error('Error deleting task:', error);
-    } finally {
-      setLoading(false);
+      setTodos(todos); // Revert to original state
+      Alert.alert('Error', 'Failed to delete task. Please try again.');
     }
   };
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#007BFF" style={styles.loadingIndicator} />;
-  }
+  const renderItem = ({ item }) => (
+    <View style={styles.todoItem}>
+      <TouchableOpacity 
+        style={styles.todoCheckbox} 
+        onPress={() => toggleComplete(item._id, item.isCompleted)}
+      >
+        {item.isCompleted ? (
+          <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+        ) : (
+          <Ionicons name="ellipse-outline" size={24} color="#757575" />
+        )}
+      </TouchableOpacity>
+      <View style={styles.todoContent}>
+        {editingTodo === item._id ? (
+          <TextInput
+            style={styles.editInput}
+            value={editingText}
+            onChangeText={setEditingText}
+            onSubmitEditing={handleSaveEdit}
+            autoFocus
+          />
+        ) : (
+          <Text style={[styles.todoText, item.isCompleted && styles.completedText]}>
+            {item.title}
+          </Text>
+        )}
+      </View>
+      <View style={styles.actions}>
+        {editingTodo === item._id ? (
+          <TouchableOpacity onPress={handleSaveEdit}>
+            <Ionicons name="checkmark" size={24} color="#4CAF50" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={() => {
+            setEditingTodo(item._id);
+            setEditingText(item.title);
+          }}>
+            <Ionicons name="create-outline" size={24} color="#FFA000" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity onPress={() => handleDelete(item._id)}>
+          <Ionicons name="trash-outline" size={24} color="#F44336" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
-      <Button title="Logout" onPress={logout} />
-      <Text style={styles.title}>To-Do List</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
+      <View style={styles.header}>
+        <Text style={styles.title}>To-Do List</Text>
+        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+          <Ionicons name="log-out-outline" size={24} color="#757575" />
+        </TouchableOpacity>
+      </View>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           placeholder="Add a new to-do"
           value={newTodo}
           onChangeText={setNewTodo}
+          onSubmitEditing={handleAddTodo}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAddTodo}>
-          <Text style={styles.addButtonText}>Add</Text>
+          <Ionicons name="add" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       <FlatList
         data={todos}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.todoItem}>
-            <TouchableOpacity onPress={() => toggleComplete(item._id, item.isCompleted)}>
-              <Text style={[styles.todoText, item.isCompleted && styles.completedText]}>
-                {item.title}
-              </Text>
-            </TouchableOpacity>
-            <View style={styles.actions}>
-              <TouchableOpacity onPress={() => {
-                setEditingTodo(item._id);
-                setEditingText(item.title);
-              }}>
-                <Text style={styles.editButton}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDelete(item._id)}>
-                <Text style={styles.deleteButton}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContainer}
       />
-      {editingTodo && (
-        <View style={styles.editContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Edit your to-do"
-            value={editingText}
-            onChangeText={setEditingText}
-          />
-          <TouchableOpacity style={styles.addButton} onPress={handleSaveEdit}>
-            <Text style={styles.addButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff', // White background for a clean look
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20, // Adds spacing below the title
+    color: '#333333',
+  },
+  logoutButton: {
+    padding: 5,
   },
   inputContainer: {
-    flexDirection: 'row', // Horizontal alignment of input and button
-    marginBottom: 20, // Spacing below the input section
+    flexDirection: 'row',
+    padding: 20,
+    backgroundColor: '#FFFFFF',
   },
   input: {
     flex: 1,
-    borderColor: '#ccc',
+    height: 50,
+    borderColor: '#E0E0E0',
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    backgroundColor: '#FFFFFF',
   },
   addButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginLeft: 10,
   },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  listContainer: {
+    paddingHorizontal: 20,
   },
   todoItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10,
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    marginVertical: 5,
+    padding: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+  },
+  todoCheckbox: {
+    marginRight: 10,
+  },
+  todoContent: {
+    flex: 1,
   },
   todoText: {
     fontSize: 16,
+    color: '#333333',
   },
   completedText: {
     textDecorationLine: 'line-through',
-    color: 'gray',
+    color: '#9E9E9E',
   },
   actions: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
+    width: 70,
   },
-  editButton: {
-    color: 'orange',
-    marginRight: 10,
-  },
-  deleteButton: {
-    color: 'red',
-  },
-  editContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-  },
-  loadingIndicator: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  editInput: {
+    fontSize: 16,
+    color: '#333333',
+    borderBottomWidth: 1,
+    borderBottomColor: '#007BFF',
+    paddingVertical: 5,
   },
 });
 
 export default HomeScreen;
+
