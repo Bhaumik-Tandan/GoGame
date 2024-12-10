@@ -1,248 +1,214 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
-  SafeAreaView, 
-  StyleSheet, 
-  Text, 
   View, 
+  Text, 
   TextInput, 
   TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform, 
-  Alert,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-  ImageBackground
+  StyleSheet, 
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { calcWidth, calcHeight } from 'app/helper/res';
-import { useAuth } from 'app/stores/auth';
-import PAGES from 'app/constants/pages';
+import { useAuth } from '../stores/auth';
+import PAGES from '../constants/pages';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({ username: '', password: '' });
 
   const { login } = useAuth();
   const navigation = useNavigation();
-  const passwordRef = useRef(null);
-
-  const validateInputs = () => {
-    const newErrors = { username: '', password: '' };
-    if (!username.trim()) newErrors.username = 'Username is required';
-    if (!password) newErrors.password = 'Password is required';
-    if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    setErrors(newErrors);
-    return !newErrors.username && !newErrors.password;
-  };
 
   const handleLogin = useCallback(async () => {
-    if (!validateInputs()) return;
-    if (isLoading) return;
-
     try {
-      setIsLoading(true);
       await login({ username: username.trim(), password });
     } catch (err) {
-      Alert.alert(
-        'Login Failed', 
-        err.message || 'An unexpected error occurred. Please try again.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsLoading(false);
+      alert(err.message || 'An unexpected error occurred. Please try again.');
     }
-  }, [username, password, isLoading, login]);
-
-  const handleSignUp = useCallback(() => {
-    navigation.navigate(PAGES.SIGNUP);
-  }, [navigation]);
-
+  }, [username, password, login]);
 
   const togglePasswordVisibility = useCallback(() => {
     setIsPasswordVisible(prev => !prev);
   }, []);
 
   return (
-    <ImageBackground 
-      source={{ uri: 'https://source.unsplash.com/random/?abstract,colorful' }} 
-      style={styles.backgroundImage}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <SafeAreaView style={styles.container}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardContainer}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.6)']}
+            style={styles.loginContainer}
           >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.6)']}
-              style={styles.loginContainer}
-            >
-              <Text style={styles.title}>Welcome Back</Text>
-              
-              <View style={styles.inputContainer}>
-                <Ionicons 
-                  name="person-outline" 
-                  size={20} 
-                  color="#4a4a4a" 
-                  style={styles.inputIcon} 
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Username"
-                  placeholderTextColor="#4a4a4a"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                />
-              </View>
-              {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
-              
-              <View style={styles.inputContainer}>
-                <Ionicons 
-                  name="lock-closed-outline" 
-                  size={20} 
-                  color="#4a4a4a" 
-                  style={styles.inputIcon} 
-                />
-                <TextInput
-                  ref={passwordRef}
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor="#4a4a4a"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!isPasswordVisible}
-                  autoCorrect={false}
-                  returnKeyType="go"
-                  onSubmitEditing={handleLogin}
-                />
-                <TouchableOpacity 
-                  onPress={togglePasswordVisibility} 
-                  style={styles.passwordVisibilityToggle}
-                >
-                  <Ionicons 
-                    name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
-                    size={20} 
-                    color="#4a4a4a" 
-                  />
-                </TouchableOpacity>
-              </View>
-              {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-              
+            <Text style={styles.title}>Welcome Back</Text>
+            
+            <View style={styles.inputContainer}>
+              <Ionicons 
+                name="person-outline" 
+                size={20} 
+                color="#4a4a4a" 
+                style={styles.inputIcon} 
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                placeholderTextColor="#4a4a4a"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Ionicons 
+                name="lock-closed-outline" 
+                size={20} 
+                color="#4a4a4a" 
+                style={styles.inputIcon} 
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#4a4a4a"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!isPasswordVisible}
+                autoCorrect={false}
+              />
               <TouchableOpacity 
-                style={styles.loginButton}
-                onPress={handleLogin}
-                disabled={isLoading}
-                accessible
-                accessibilityLabel="Login"
-                accessibilityState={{ disabled: isLoading }}
+                onPress={togglePasswordVisibility} 
+                style={styles.passwordVisibilityToggle}
               >
-                {isLoading ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text style={styles.loginButtonText}>Login</Text>
-                )}
+                <Ionicons 
+                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
+                  size={20} 
+                  color="#4a4a4a" 
+                />
               </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPress={handleLogin}
+            >
+              <Text style={styles.loginButtonText}>Login</Text>
+            </TouchableOpacity>
 
-
-              <View style={styles.signUpPrompt}>
-                <Text style={styles.signUpText}>Don't have an account? </Text>
-                <TouchableOpacity 
-                  onPress={handleSignUp}
-                  accessible
-                  accessibilityLabel="Sign Up"
-                >
-                  <Text style={styles.signUpButtonText}>Sign Up</Text>
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </TouchableWithoutFeedback>
-    </ImageBackground>
+            <View style={styles.signUpPrompt}>
+              <Text style={styles.signUpText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate(PAGES.SIGNUP)}>
+                <Text style={styles.signUpButtonText}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    resizeMode: 'cover',
-  },
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  keyboardContainer: {
+  keyboardAvoidingView: {
     flex: 1,
+  },
+  scrollView: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: calcWidth(4),
+    padding: 20,
   },
   loginContainer: {
     borderRadius: 20,
-    padding: calcWidth(5),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    padding: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+      web: {
+        boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+      },
+    }),
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: calcHeight(4),
-    color: '#4a4a4a',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 20,
+    color: '#333333',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 10,
-    marginBottom: calcHeight(2),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    elevation: 3,
+    marginBottom: 15,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0px 1px 2.22px rgba(0, 0, 0, 0.22)',
+      },
+    }),
   },
   inputIcon: {
-    marginLeft: calcWidth(3),
-    marginRight: calcWidth(2),
+    marginLeft: 15,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    height: calcHeight(6),
-    paddingRight: calcWidth(2),
+    height: 50,
     fontSize: 16,
-    color: '#4a4a4a',
+    color: '#333333',
   },
   passwordVisibilityToggle: {
-    padding: calcWidth(2),
-    marginRight: calcWidth(1),
+    padding: 10,
+    marginRight: 5,
   },
   loginButton: {
     backgroundColor: '#FF6B6B',
-    padding: calcHeight(2),
+    padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: calcHeight(2),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    marginTop: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+      web: {
+        boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+      },
+    }),
   },
   loginButtonText: {
     color: 'white',
@@ -252,7 +218,7 @@ const styles = StyleSheet.create({
   signUpPrompt: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: calcHeight(3),
+    marginTop: 20,
   },
   signUpText: {
     color: '#4a4a4a',
@@ -263,13 +229,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  errorText: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    marginBottom: calcHeight(1),
-    textAlign: 'center',
-  }
 });
 
 export default LoginScreen;
-

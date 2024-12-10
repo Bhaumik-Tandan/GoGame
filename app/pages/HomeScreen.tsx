@@ -6,13 +6,15 @@ import {
   TouchableOpacity, 
   FlatList, 
   StyleSheet, 
-  SafeAreaView,
-  StatusBar,
-  Alert
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import request from 'app/helper/apiHelper';
-import { useAuth } from 'app/stores/auth';
+
+import request from '../helper/apiHelper';
+import { useAuth } from '../stores/auth';
 
 const HomeScreen = () => {
   const [todos, setTodos] = useState([]);
@@ -27,7 +29,7 @@ const HomeScreen = () => {
       setTodos(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      Alert.alert('Error', 'Failed to fetch tasks. Please try again.');
+      alert('Failed to fetch tasks. Please try again.');
     }
   }, []);
 
@@ -48,7 +50,7 @@ const HomeScreen = () => {
     } catch (error) {
       console.error('Error adding task:', error);
       setTodos(prevTodos => prevTodos.filter(todo => todo._id !== optimisticTodo._id));
-      Alert.alert('Error', 'Failed to add task. Please try again.');
+      alert('Failed to add task. Please try again.');
     }
   };
 
@@ -61,8 +63,8 @@ const HomeScreen = () => {
       await request.patch(`/task/${id}`, { isCompleted: !currentStatus });
     } catch (error) {
       console.error('Error toggling task:', error);
-      setTodos(todos); // Revert to original state
-      Alert.alert('Error', 'Failed to update task. Please try again.');
+      setTodos(todos);
+      alert('Failed to update task. Please try again.');
     }
   };
 
@@ -78,8 +80,8 @@ const HomeScreen = () => {
       await request.patch(`/task/${editingTodo}`, { title: editingText });
     } catch (error) {
       console.error('Error editing task:', error);
-      setTodos(todos); // Revert to original state
-      Alert.alert('Error', 'Failed to edit task. Please try again.');
+      setTodos(todos);
+      alert('Failed to edit task. Please try again.');
     }
   };
 
@@ -90,8 +92,8 @@ const HomeScreen = () => {
       await request.delete(`/task/${id}`);
     } catch (error) {
       console.error('Error deleting task:', error);
-      setTodos(todos); // Revert to original state
-      Alert.alert('Error', 'Failed to delete task. Please try again.');
+      setTodos(todos);
+      alert('Failed to delete task. Please try again.');
     }
   };
 
@@ -144,31 +146,35 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-      <View style={styles.header}>
-        <Text style={styles.title}>To-Do List</Text>
-        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#757575" />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Add a new to-do"
-          value={newTodo}
-          onChangeText={setNewTodo}
-          onSubmitEditing={handleAddTodo}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>To-Do List</Text>
+          <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#757575" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Add a new to-do"
+            value={newTodo}
+            onChangeText={setNewTodo}
+            onSubmitEditing={handleAddTodo}
+          />
+          <TouchableOpacity style={styles.addButton} onPress={handleAddTodo}>
+            <Ionicons name="add" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={todos}
+          keyExtractor={(item) => item._id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
         />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddTodo}>
-          <Ionicons name="add" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={todos}
-        keyExtractor={(item) => item._id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-      />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -177,6 +183,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -229,11 +238,20 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 5,
     padding: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0px 1px 2.22px rgba(0, 0, 0, 0.22)',
+      },
+    }),
   },
   todoCheckbox: {
     marginRight: 10,
