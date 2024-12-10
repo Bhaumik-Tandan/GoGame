@@ -7,7 +7,8 @@ import {
   TextInput, 
   TouchableOpacity, 
   KeyboardAvoidingView, 
-  Platform 
+  Platform, 
+  Alert 
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -22,11 +23,17 @@ const LoginScreen = () => {
   const navigation = useNavigation();
 
   const handleLogin = () => {
-    login({ username: username, password });
+    if (!username || !password) {
+      Alert.alert('Error', 'Please enter both username and password.');
+      return;
+    }
+    login({ username, password }).catch((err) => {
+      Alert.alert('Login Failed', err.message || 'An unexpected error occurred.');
+    });
   };
 
   const handleSignUp = () => {
-    navigation.navigate(PAGES.SIGNUP as never, {});
+    navigation.navigate(PAGES.SIGNUP, {});
   };
 
   return (
@@ -44,6 +51,8 @@ const LoginScreen = () => {
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="username"
           />
           
           <TextInput
@@ -51,23 +60,29 @@ const LoginScreen = () => {
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry={true}
+            secureTextEntry
+            textContentType="password"
+            autoCompleteType="password"
           />
           
           <TouchableOpacity 
             style={styles.loginButton}
             onPress={handleLogin}
+            accessible
+            accessibilityLabel="Login"
           >
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
-          <Text>Don't have an account? </Text>
-          <TouchableOpacity 
-            style={styles.signUpButton}
-            onPress={handleSignUp}
-          >
-            <Text style={styles.signUpButtonText}>Sign Up</Text>
-          </TouchableOpacity>
-          
+          <View style={styles.signUpPrompt}>
+            <Text>Don't have an account? </Text>
+            <TouchableOpacity 
+              onPress={handleSignUp}
+              accessible
+              accessibilityLabel="Sign Up"
+            >
+              <Text style={styles.signUpButtonText}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -77,7 +92,7 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: calcWidth(2),
+    padding: calcWidth(2),
     backgroundColor: '#f5f5f5',
   },
   keyboardContainer: {
@@ -120,14 +135,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  signUpButton: {
+  signUpPrompt: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: calcWidth(2),
-    alignItems: 'center',
   },
   signUpButtonText: {
     color: '#007bff',
     fontSize: 14,
-  }
+  },
 });
 
 export default LoginScreen;

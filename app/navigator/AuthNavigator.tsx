@@ -9,7 +9,11 @@ const Stack = createNativeStackNavigator();
 
 const AuthNavigator = (
         <Stack.Navigator>
-            <Stack.Group>
+            <Stack.Group 
+            screenOptions={{
+                headerShown: false,
+            }}
+            >
               
             <Stack.Screen
                     name={PAGES.SIGNUP}
