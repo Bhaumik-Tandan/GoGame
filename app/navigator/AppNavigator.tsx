@@ -10,9 +10,9 @@ const Stack = createNativeStackNavigator();
 const AppNavigator = () => {
     return (
             <Stack.Navigator
-                screenOptions={{
-                    headerBackTitleVisible: false,
-                }}
+            screenOptions={{
+                headerShown: false,
+            }}
             >
                     <Stack.Group>
                    
