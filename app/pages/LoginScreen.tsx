@@ -22,7 +22,7 @@ const LoginScreen = () => {
   const navigation = useNavigation();
 
   const handleLogin = () => {
-    login({ userName: username, password });
+    login({ username: username, password });
   };
 
   const handleSignUp = () => {
